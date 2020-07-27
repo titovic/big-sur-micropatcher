@@ -9,6 +9,10 @@ echo 'Macs! (See the README for more information.)'
 # Add a blank line of output to make things easier on the eyes.
 echo
 
+VOLUME='/Volumes/Install macOS Big Sur Beta'
+BOOT_PLIST="$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist"
+PAYLOADS="$VOLUME/payloads"
+
 # Allow the user to drag-and-drop the USB stick in Terminal, to specify the
 # path to the USB stick in question. (Otherwise it will try a hardcoded path
 # for beta 2 and up, followed by a hardcoded path for beta 1.)
@@ -77,29 +81,29 @@ fi
 echo 'Patching com.apple.Boot.plist...'
 # It would seem more obvious to do mv then cp, but doing cp then cat lets us
 # use cat as a permissions-preserving Unix trick, just to be extra cautious.
-if [ ! -e "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist.original" ]
+if [ ! -e "$BOOT_PLIST.original" ]
 then
-    cp "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist" "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist.original"
+    cp "$BOOT_PLIST" "$BOOT_PLIST.original"
 fi
-cat payloads/com.apple.Boot.plist > "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist"
+cat payloads/com.apple.Boot.plist > "$BOOT_PLIST"
 
-# Copy the shell scripts into place so that they may be used once the
-# USB stick is booted.
+# Copy shell scripts into place so they're available once the USB stick boot.
 echo 'Adding shell scripts...'
-cp -f payloads/*.sh "$VOLUME"
+mkdir "$PAYLOADS"
+cp -f payloads/*.sh "$PAYLOADS"
 
 # Copy Hax dylibs into place
 echo "Adding Hax dylibs..."
-cp -f payloads/ASentientBot-Hax/Hax*.dylib "$VOLUME"
+cp -f payloads/ASentientBot-Hax/Hax*.dylib "$PAYLOADS"
 
 # Not sure if this is actually necessary, but let's play it safe and ensure
 # the shell scripts are executable.
-chmod u+x "$VOLUME"/*.sh
+chmod u+x "$PAYLOADS"/*.sh
 # Same for the dylibs
-chmod u+x "$VOLUME"/Hax*.dylib
+chmod u+x "$PAYLOADS"/Hax*.dylib
 
 echo 'Adding kexts...'
-cp -rf payloads/kexts "$VOLUME"
+cp -rf payloads/kexts "$PAYLOADS"
 
 # Save a file onto the USB stick that says what patcher & version was used,
 # so it can be identified later (e.g. for troubleshooting purposes).
