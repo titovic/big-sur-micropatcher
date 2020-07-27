@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE='/Volumes/Image Volume'
+BASE='/Volumes/Image Volume/payloads'
 
 if [ "x$1" = "x--seal" ]
 then
