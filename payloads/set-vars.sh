@@ -47,4 +47,4 @@ echo 'Done changing boot-args and csrutil settings.'
 echo
 
 # Now set things up to run the installer.
-"/Volumes/Image Volume/insert-hax.sh" $SEAL
+"/Volumes/Image Volume/payloads/insert-hax.sh" $SEAL
