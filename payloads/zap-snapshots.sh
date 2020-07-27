@@ -5,7 +5,7 @@
 # at all obvious that it does this, unless you try it against actual
 # `diskutil apfs listsnapshots` output.
 
-VOLUME="$1"
+VOLUME=echo "$1"|sed -e 's@/$@@'
 
 # Make sure a volume has been specified.
 if [ -z "$VOLUME" ]
