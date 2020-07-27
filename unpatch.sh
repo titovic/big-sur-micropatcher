@@ -11,6 +11,11 @@ echo "It's really best to recreate the USB stick using createinstallmedia,"
 echo "but this takes much less time and is useful for patcher development."
 echo
 
+VOLUME='/Volumes/Install macOS Big Sur Beta'
+CORESERVICES="$VOLUME/System/Library/CoreServices/PlatformSupport.plist"
+BOOT_PLIST="$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist"
+PAYLOADS="$VOLUME/payloads"
+
 # Allow the user to drag-and-drop the USB stick in Terminal, to specify the
 # path to the USB stick in question. (Otherwise it will try a hardcoded path
 # for beta 2 and up, followed by a hardcoded path for beta 1.)
@@ -53,11 +58,10 @@ fi
 
 # Undo the boot-time compatibility check patch, if present
 echo 'Checking for boot-time compatibility check patch (v0.0.1/v0.0.2).'
-if [ -e "$VOLUME/System/Library/CoreServices/PlatformSupport.plist.inactive" ]
+if [ -e "$CORESERVICES.inactive" ]
 then
     echo 'Removing boot-time compatibility check patch.'
-    mv "$VOLUME/System/Library/CoreServices/PlatformSupport.plist.inactive" \
-       "$VOLUME/System/Library/CoreServices/PlatformSupport.plist"
+    mv "$CORESERVICES.inactive" "$CORESERVICES"
 else
     echo 'Boot-time compatibility check not present; continuing.'
 fi
@@ -66,11 +70,11 @@ echo
 
 # Undo the com.apple.Boot.plist patch, if present
 echo 'Checking for com.apple.Boot.plist patch (v0.0.3+).'
-if [ -e "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist.original" ]
+if [ -e "$BOOT_PLIST.original" ]
 then
     echo 'Removing com.apple.Boot.plist patch.'
-    cat "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist.original" > "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist"
-    rm "$VOLUME/Library/Preferences/SystemConfiguration/com.apple.Boot.plist.original"
+    cat "$BOOT_PLIST.original" > "$BOOT_PLIST"
+    rm "$BOOT_PLIST.original"
 else
     echo 'com.apple.Boot.plist patch not present; continuing.'
 fi
@@ -78,16 +82,16 @@ fi
 echo
 echo 'Removing kexts, shell scripts, and patcher version info.'
 # For v0.0.9 and earlier
-rm -rf "$VOLUME"/*.kext
+rm -rf "$PAYLOADS"/*.kext
 # For v0.0.10 and later
-rm -rf "$VOLUME"/kexts
-rm -f "$VOLUME"/*.kext.zip "$VOLUME"/*.sh "$VOLUME/Patch-Version.txt"
+rm -rf "$PAYLOADS"/kexts
+rm -f "$PAYLOADS"/*.kext.zip "$PAYLOADS"/*.sh "$VOLUME/Patch-Version.txt"
 
 # Now that the patcher is going to add the dylib itself, go ahead and
 # remove that too.
 echo 'Remvoing Hax dylibs...'
-rm -f "$VOLUME"/Hax*.dylib
-rm -rf "$VOLUME"/Hax*.app
+rm -f "$PAYLOADS"/Hax*.dylib
+rm -rf "$PAYLOADS"/Hax*.app
 
 echo
 echo 'Syncing.'
