@@ -8,8 +8,13 @@ kmutilErrorCheck () {
     if [ $? -ne 0 ]
     then
         echo 'kmutil failed. See above output for more information.'
-        echo 'patch-kexts.sh cannot continue.'
-        exit 1
+        echo
+        echo "Do you still want to proceed?"
+        read -p "(press y to continue):" -n 1 -r
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo 'patch-kexts.sh will now exit.'
+            exit 1
+        fi
     fi
 }
 
@@ -75,7 +80,8 @@ else
     echo 'Installing IO80211Family to:'
 fi
 
-VOLUME="$1"
+#Drop any trailing '/' as it may cause trouble later (the mount command will...)
+VOLUME=echo "$1"|sed -e 's@/$@@'
 echo "$VOLUME"
 echo
 
@@ -115,7 +121,7 @@ fi
 # Check that the $VOLUME has macOS build 20*. This version check will
 # hopefully keep working even after Apple bumps the version number to 11.
 SVPL="$VOLUME"/System/Library/CoreServices/SystemVersion.plist
-SVPL_VER=`fgrep '<string>10' "$SVPL" | sed -e 's@^.*<string>10@10@' -e 's@</string>@@' | uniq -d`
+SVPL_VER=`grep '<string>[0-9][0-9][.]' "$SVPL" | sed -e 's@^.*<string>@@' -e 's@</string>@@' | uniq -d`
 SVPL_BUILD=`grep '<string>[0-9][0-9][A-Z]' "$SVPL" | sed -e 's@^.*<string>@@' -e 's@</string>@@'`
 
 if echo $SVPL_BUILD | grep -q '^20'
@@ -173,8 +179,8 @@ csrutil authenticated-root disable
 echo "Remounting volume as read-write..."
 if ! mount -uw "$VOLUME"
 then
-    echo "Remount failed. Kext installation cannot proceed."
-    exit 1
+   echo "Remount failed. Kext installation cannot proceed."
+   exit 1
 fi
 
 # Move the old kext out of the way, or delete if needed. Then unzip the
@@ -260,7 +266,7 @@ fi
 # "invalid argument" errors, and chrooting it eliminated those errors.
 # BTW, kmutil defaults to "--volume-root /" according to the manpage, so
 # it's probably redundant, but whatever.
-echo 'Using kmutil to rebuild boot collection...'
+echo 'Using kmutil to rebuild BOOT collection...'
 chroot "$VOLUME" kmutil create -n boot \
     --kernel /System/Library/Kernels/kernel \
     --volume-root / $BUNDLE_PATH \
@@ -269,7 +275,7 @@ kmutilErrorCheck
 
 # When creating SystemKernelExtensions.kc, kmutil requires *both* --boot-path
 # and --system-path!
-echo 'Using kmutil to rebuild system collection...'
+echo 'Using kmutil to rebuild SYSTEM collection...'
 chroot "$VOLUME" kmutil create -n sys \
     --kernel /System/Library/Kernels/kernel \
     --volume-root / \
@@ -282,6 +288,7 @@ kmutilErrorCheck
 # don't believe me!
 "$VOLUME/usr/sbin/kcditto"
 
+# Create a new snapshot we'll boot and contain our kernel changes
 bless --folder "$VOLUME"/System/Library/CoreServices --bootefi --create-snapshot
 
 echo 'Installed patch kexts successfully.'
