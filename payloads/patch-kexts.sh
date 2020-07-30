@@ -81,7 +81,7 @@ else
 fi
 
 #Drop any trailing '/' as it may cause trouble later (the mount command will...)
-VOLUME=echo "$1"|sed -e 's@/$@@'
+VOLUME=`echo "$1"|sed -e 's@/$@@'`
 echo "$VOLUME"
 echo
 
